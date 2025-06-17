@@ -2,7 +2,7 @@ name: E1 Runner
 
 on:
   schedule:
-    - cron: '0 * * * *' # Runs every hour
+    - cron: '*/5 * * * *' # Runs 5 mininus
   workflow_dispatch:
 
 jobs:
