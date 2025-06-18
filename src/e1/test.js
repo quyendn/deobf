@@ -112,6 +112,33 @@ function extractKey(deobfuscated, encryptedBase64Content)
     const v5Regex = /((?:[A-Za-z0-9+/]{4}){16,}(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?)/;
 
     
+
+    // 2. Dùng regex trích E: số sau “E = ”
+    const eMatch = deobfuscated.match(/(?:var\s+)?E\s*=\s*(\d+)\s*;/);
+    if (!eMatch){
+        console.log('[*] (V3) Not found E.');
+    }
+    const E = parseInt(eMatch[1], 10);
+
+    // 3. Dùng regex trích mảng z: các số bên trong […]
+    const zMatch8 = deobfuscated.match(/z\s*=\s*\[([\d\s,]+)\]/);
+    if(zMatch8)
+    {
+        const z = zMatch8[1].split(',').map(s => parseInt(s.trim(), 10));
+        const key = String.fromCharCode(...z.map(byte => byte ^ E));
+        console.log("key:" + key)
+        let result = tryDecryptJson(encryptedBase64Content, key);
+        if (result) 
+        {
+            console.log('[*] (V8) Key found when checking for hex arrays.');
+            return [result, key];
+        }
+        else 
+            console.error('[!] Hex array does not have 64 elements.');
+    }
+    
+
+
     const v7Regex = /v\s*=\s*['"]--([^'"]+)['"]/;
 
     const v7Match =  deobfuscated.match(v7Regex);
