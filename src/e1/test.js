@@ -109,7 +109,26 @@ function extractKey(deobfuscated, encryptedBase64Content)
     //   if (!z.t2.Q1kzx_R()) {
     //     return W_cei(L);
     //   }
-    const v5Regex = /((?:[A-Za-z0-9+/]{4}){16,}(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?)/
+    const v5Regex = /((?:[A-Za-z0-9+/]{4}){16,}(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?)/;
+
+    
+    const v7Regex = /v\s*=\s*['"]--([^'"]+)['"]/;
+
+    const v7Match =  deobfuscated.match(v7Regex);
+    if(v7Match)
+    {
+        console.log("v7Match")
+        const key = v7Match[1];
+        console.log("key:" + key)
+        let result = tryDecryptJson(encryptedBase64Content, key);
+        if (result) 
+        {
+            console.log('[*] (V3) Key found when checking for hex arrays.');
+            return [result, key];
+        }
+        else 
+            console.error('[!] Hex array does not have 64 elements.');
+    }
 
 
     const v6Regex = /t\s*=\s*(\[[\s\S]*?\]);/
