@@ -2,8 +2,13 @@ import fs from 'fs';
 import { execSync } from 'child_process';
 import CryptoJS from 'crypto-js';
 import { exit } from 'process';
+import OpenAI from "openai";
+const openai = new OpenAI({
+  apiKey: "xxxx"//process.env.OPENAI_API_KEY
+});
 (async () => {
     try {
+        //Key = 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;
          const resource = await fetch('https://flixhq.to/ajax/episode/sources/11080747');
          const resourceData = await resource.json();
         if (resourceData.type !== 'iframe') {
@@ -62,7 +67,7 @@ import { exit } from 'process';
             //         type: 'hls'
             //     }
             // ]
-            const [json, key] = extractKey(deobfuscated, encryptedBase64);
+            const [json, key] =  extractKey(deobfuscated, encryptedBase64);
 
             console.log('[*] Decrypted JSON:', json);
             console.log('\n[*] Decryption Key:', key);
@@ -84,6 +89,24 @@ import { exit } from 'process';
 })();
 function extractKey(deobfuscated, encryptedBase64Content) 
 {
+
+
+    const lines = deobfuscated.split('\n');
+
+    // 1. Tìm index của dòng đầu tiên có "CryptoJS"
+    const startIdx = lines.findIndex(line => line.includes('CryptoJS'));
+    if (startIdx === -1) {
+        console.error('Không tìm thấy chuỗi "CryptoJS" trong file.');
+    }
+   // 2. Tính từ 25 dòng trước đó đến chính dòng đó
+    const from = Math.max(0, startIdx - 25);
+    const to   = startIdx;  // bao gồm cả dòng chứa CryptoJS
+    // 3. Lấy và in ra
+    const snippet = lines.slice(from, to + 1).join('\n');
+    console.log(`--- Đoạn mã từ dòng ${from + 1} đến ${to + 1} ---\n`);
+    console.log(snippet);
+
+
     // Iterate over n, each element is an index into K. each index should not exceed K's length
     // K = ["542", "e3", "8129", "68c", "974c", "3", "9a11", "922a", "0b0", "89c", "6b", "7b", "b21c", "3295", "91", "7", "ec", "ffcf", "4a89", "a", "fcd3", "d2", "b"];
     // n = [3, 16, 18, 14, 0, 19, 22, 9, 21, 7, 12, 13, 6, 1, 11, 2, 15, 4, 20, 17, 10, 5, 8];
@@ -112,14 +135,16 @@ function extractKey(deobfuscated, encryptedBase64Content)
     const v5Regex = /((?:[A-Za-z0-9+/]{4}){16,}(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?)/;
 
     
-
+    var E;
     // 2. Dùng regex trích E: số sau “E = ”
     const eMatch = deobfuscated.match(/(?:var\s+)?E\s*=\s*(\d+)\s*;/);
     if (!eMatch){
         console.log('[*] (V3) Not found E.');
     }
-    const E = parseInt(eMatch[1], 10);
-
+    else
+    {
+        E = parseInt(eMatch[1], 10);
+    }
     // 3. Dùng regex trích mảng z: các số bên trong […]
     const zMatch8 = deobfuscated.match(/z\s*=\s*\[([\d\s,]+)\]/);
     if(zMatch8)
@@ -277,4 +302,30 @@ function tryDecryptJson(encryptedBase64, key)
         console.error(`[!] Failed to decrypt json with key ${key}, (${ex.message})`);
         return null;
     }
+}
+async function getKeyFromCode(jsCode) {
+  const res = await openai.chat.completions.create({
+    model: "gpt-3.5-turbo",
+    messages: [
+      { role: "system", content: "You are a helpful assistant that extracts the AES key from obfuscated JS." },
+      { role: "user", content: `Đây là đoạn mã JS:\n${jsCode}` }
+    ],
+    functions: [
+      {
+        name: "extract_key",
+        description: "Extract the AES key from the given JavaScript code snippet",
+        parameters: {
+          type: "object",
+          properties: {
+            key: { type: "string", description: "The extracted AES key" }
+          },
+          required: ["key"]
+        }
+      }
+    ],
+    function_call: { name: "extract_key" }
+  });
+
+  const args = JSON.parse(res.choices[0].message.function_call.arguments);
+  return args.key;
 }
