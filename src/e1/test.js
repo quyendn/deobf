@@ -3,12 +3,9 @@ import { execSync } from 'child_process';
 import CryptoJS from 'crypto-js';
 import { exit } from 'process';
 import OpenAI from "openai";
-const openai = new OpenAI({
-  apiKey: "xxxx"//process.env.OPENAI_API_KEY
-});
+
 (async () => {
     try {
-        //Key = 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;
          const resource = await fetch('https://flixhq.to/ajax/episode/sources/11080747');
          const resourceData = await resource.json();
         if (resourceData.type !== 'iframe') {
@@ -302,30 +299,4 @@ function tryDecryptJson(encryptedBase64, key)
         console.error(`[!] Failed to decrypt json with key ${key}, (${ex.message})`);
         return null;
     }
-}
-async function getKeyFromCode(jsCode) {
-  const res = await openai.chat.completions.create({
-    model: "gpt-3.5-turbo",
-    messages: [
-      { role: "system", content: "You are a helpful assistant that extracts the AES key from obfuscated JS." },
-      { role: "user", content: `Đây là đoạn mã JS:\n${jsCode}` }
-    ],
-    functions: [
-      {
-        name: "extract_key",
-        description: "Extract the AES key from the given JavaScript code snippet",
-        parameters: {
-          type: "object",
-          properties: {
-            key: { type: "string", description: "The extracted AES key" }
-          },
-          required: ["key"]
-        }
-      }
-    ],
-    function_call: { name: "extract_key" }
-  });
-
-  const args = JSON.parse(res.choices[0].message.function_call.arguments);
-  return args.key;
 }
