@@ -131,7 +131,24 @@ function extractKey(deobfuscated, encryptedBase64Content)
     //   }
     const v5Regex = /((?:[A-Za-z0-9+/]{4}){16,}(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?)/;
 
-    
+    const fMatch = snippet.match(/f\s*=\s*['"]([^'"]+)['"]/);
+    if (fMatch) {
+        const f = fMatch[1];
+        console.log('Base64 f =', f);
+
+        // 3. Decode Base64 thành AES key
+        const key = Buffer.from(f, 'base64').toString('utf-8');
+        console.log("key:" + key)
+        let result = tryDecryptJson(encryptedBase64Content, key);
+        if (result) 
+        {
+            console.log('[*] (fMatch) Key found when checking for hex arrays.');
+            return [result, key];
+        }
+        else 
+            console.error('[!] Hex array does not have 64 elements.');
+    }
+
     var E;
     // 2. Dùng regex trích E: số sau “E = ”
     const eMatch = deobfuscated.match(/(?:var\s+)?E\s*=\s*(\d+)\s*;/);
