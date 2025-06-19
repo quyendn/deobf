@@ -2,7 +2,7 @@ import fs from 'fs';
 import { execSync } from 'child_process';
 import CryptoJS from 'crypto-js';
 import { exit } from 'process';
-import OpenAI from "openai";
+
 
 (async () => {
     try {
