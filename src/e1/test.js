@@ -138,34 +138,49 @@ function extractKey(deobfuscated, encryptedBase64Content)
         // 2. Đảo ngược chuỗi để lấy key
         const aesKey = o.split('').reverse().join('');
         console.log("key:" + aesKey)
-        let result = tryDecryptJson(encryptedBase64Content, aesKey);
-        if (result) 
+        if(aesKey.length > 0)
         {
-            console.log('[*] (oMatch) Key found when checking for reverse arrays.');
-            return [result, aesKey];
+            let result = tryDecryptJson(encryptedBase64Content, aesKey);
+            if (result) 
+            {
+                console.log('[*] (oMatch) Key found when checking for reverse arrays.');
+                return [result, aesKey];
+            }
+            else 
+                console.error('Not found key');
         }
-        else 
-            console.error('Not found key');
+        
     }
    
 
 
     const fMatch = snippet.match(/f\s*=\s*['"]([^'"]+)['"]/);
     if (fMatch) {
-        const f = fMatch[1];
-        console.log('Base64 f =', f);
-        console.log('[*] (fMatch)');
-        // 3. Decode Base64 thành AES key
-        const key = Buffer.from(f, 'base64').toString('utf-8');
-        console.log("key:" + key)
-        let result = tryDecryptJson(encryptedBase64Content, key);
-        if (result) 
-        {
-            console.log('[*] (fMatch) Key found when checking for hex arrays.');
-            return [result, key];
+        try{
+
+            const f = fMatch[1];
+            console.log('Base64 f =', f);
+            console.log('[*] (fMatch)');
+            // 3. Decode Base64 thành AES key
+            const key = Buffer.from(f, 'base64').toString('utf-8');
+            console.log("key:" + key)
+            if(key.length > 0)
+            {
+                let result = tryDecryptJson(encryptedBase64Content, key);
+                if (result) 
+                {
+                    console.log('[*] (fMatch) Key found when checking for hex arrays.');
+                    return [result, key];
+                }
+                else 
+                    console.error('[!] Hex array does not have 64 elements.');
+                }
+            
+            }
+        catch{
+
         }
-        else 
-            console.error('[!] Hex array does not have 64 elements.');
+        
     }
 
     var E;
@@ -186,14 +201,17 @@ function extractKey(deobfuscated, encryptedBase64Content)
         const z = zMatch8[1].split(',').map(s => parseInt(s.trim(), 10));
         const key = String.fromCharCode(...z.map(byte => byte ^ E));
         console.log("key:" + key)
-        let result = tryDecryptJson(encryptedBase64Content, key);
-        if (result) 
+        if(key.length > 0)
         {
-            console.log('[*] (V8) Key found when checking for hex arrays.');
-            return [result, key];
+            let result = tryDecryptJson(encryptedBase64Content, key);
+            if (result) 
+            {
+                console.log('[*] (V8) Key found when checking for hex arrays.');
+                return [result, key];
+            }
+            else 
+                console.error('[!] Hex array does not have 64 elements.');
         }
-        else 
-            console.error('[!] Hex array does not have 64 elements.');
     }
     
 
@@ -206,14 +224,17 @@ function extractKey(deobfuscated, encryptedBase64Content)
         console.log("v7Match")
         const key = v7Match[1];
         console.log("key:" + key)
-        let result = tryDecryptJson(encryptedBase64Content, key);
-        if (result) 
+        if(key.length > 0)
         {
-            console.log('[*] (V3) Key found when checking for hex arrays.');
-            return [result, key];
+            let result = tryDecryptJson(encryptedBase64Content, key);
+            if (result) 
+            {
+                console.log('[*] (V3) Key found when checking for hex arrays.');
+                return [result, key];
+            }
+            else 
+                console.error('[!] Hex array does not have 64 elements.');
         }
-        else 
-            console.error('[!] Hex array does not have 64 elements.');
     }
 
 
@@ -229,14 +250,18 @@ function extractKey(deobfuscated, encryptedBase64Content)
             console.log(t)
             const key = t.map(v => String.fromCharCode(parseInt(v, 16))).join("");
             console.log("key:" + key)
-            let result = tryDecryptJson(encryptedBase64Content, key);
-            if (result) 
+            if(key.length > 0)
             {
-                console.log('[*] (V3) Key found when checking for hex arrays.');
-                return [result, key];
+                let result = tryDecryptJson(encryptedBase64Content, key);
+                if (result) 
+                {
+                    console.log('[*] (V3) Key found when checking for hex arrays.');
+                    return [result, key];
+                }
+                else 
+                    console.error('[!] Hex array does not have 64 elements.');
             }
-            else 
-                console.error('[!] Hex array does not have 64 elements.');
+            
 
         }
         catch{
@@ -251,32 +276,39 @@ function extractKey(deobfuscated, encryptedBase64Content)
         const pattern = JSON.parse(v1Match[1]);
         const index = JSON.parse(v1Match[2]);
         let key = index.map(i => pattern[i]).join('');
-        let result = tryDecryptJson(encryptedBase64Content, key);
-        if (result) 
+        if(key.length > 0)
         {
-            console.log('[*] (V1) Key found when checking for string mapping.');
-            return [result, key];
+            let result = tryDecryptJson(encryptedBase64Content, key);
+            if (result) 
+            {
+                console.log('[*] (V1) Key found when checking for string mapping.');
+                return [result, key];
+            }
         }
+        
     }
 
     const v2Match = deobfuscated.match(v2Regex);
     if (v2Match) 
     {
         let key = v2Match[1];
-        let result = tryDecryptJson(encryptedBase64Content, key);
-        if (result) 
+        if(key.length > 0)
         {
-            console.log('[*] (V2) Key found when checking for hex strings.');
-            return [result, key];
-        }
-        else
-        {
-            key = v2Match[1].split('').reverse().join('');
-            result = tryDecryptJson(encryptedBase64Content, key);
+            let result = tryDecryptJson(encryptedBase64Content, key);
             if (result) 
             {
-                console.log('[*] (V6) Key found when checking for reversed-hex strings.');
+                console.log('[*] (V2) Key found when checking for hex strings.');
                 return [result, key];
+            }
+            else
+            {
+                key = v2Match[1].split('').reverse().join('');
+                result = tryDecryptJson(encryptedBase64Content, key);
+                if (result) 
+                {
+                    console.log('[*] (V6) Key found when checking for reversed-hex strings.');
+                    return [result, key];
+                }
             }
         }
     }
@@ -288,11 +320,14 @@ function extractKey(deobfuscated, encryptedBase64Content)
         if (hexArray.length === 64) 
         {
             let key = hexArray.map(hex => String.fromCharCode(parseInt(hex, 16))).join("");
-            let result = tryDecryptJson(encryptedBase64Content, key);
-            if (result) 
+            if(key.length > 0)
             {
-                console.log('[*] (V3) Key found when checking for hex arrays.');
-                return [result, key];
+                let result = tryDecryptJson(encryptedBase64Content, key);
+                if (result) 
+                {
+                    console.log('[*] (V3) Key found when checking for hex arrays.');
+                    return [result, key];
+                }
             }
         }
         else 
@@ -304,11 +339,14 @@ function extractKey(deobfuscated, encryptedBase64Content)
     {
         const intArray = JSON.parse(v4Match[1]);
         let key = intArray.map(i => String.fromCharCode(i)).join('');
-        let result = tryDecryptJson(encryptedBase64Content, key);
-        if (result) 
+        if(key.length > 0)
         {
-            console.log('[*] (V4) Key found when checking for int arrays.');
-            return [result, key];
+            let result = tryDecryptJson(encryptedBase64Content, key);
+            if (result) 
+            {
+                console.log('[*] (V4) Key found when checking for int arrays.');
+                return [result, key];
+            }
         }
     }
 
@@ -341,6 +379,6 @@ function tryDecryptJson(encryptedBase64, key)
     catch (ex)
     {
         console.error(`[!] Failed to decrypt json with key ${key}, (${ex.message})`);
-        return null;
+        return "";
     }
 }
