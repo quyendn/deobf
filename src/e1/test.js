@@ -141,6 +141,27 @@ function extractKey(deobfuscated, encryptedBase64Content) {
     /(Y|J|E|u|I|G|k)\s*=\s*\(\)\s*=>\s*{[\s\S]*?return\s*['"]([^'"]+)['"]/g;
 
   const matchFXX = snippet.match(/F\s*=\s*['"]([^'"]+)['"]/);
+
+  // 2. Regex tìm biến O = "--....";
+  const oMatchXY = deobfuscated.match(/O\s*=\s*['"]([^'"]+)['"]/);
+  if (oMatchXY) {
+    try {
+      console.log("tìm thấy biến O trong file.");
+      const O = oMatchXY[1]; // e.g. "--XDoci5Wqaf2jQlfAse6Zdk8d1rkPKWPc9"
+      // 3. Logic của Y(): return O.slice(2)
+      const aesKeyX = O.slice(2);
+      if (aesKeyX.length > 0) {
+        let result = tryDecryptJson(encryptedBase64Content, aesKeyX);
+        if (result) {
+          console.log(
+            "[*] (oMatchXY) Key found when checking for reverse arrays."
+          );
+          return [result, aesKeyX];
+        } else console.error("Not Decrypt with key");
+      }
+    } catch {}
+  }
+
   try {
     if (matchFXX) {
       // 2. Lấy giá trị F
