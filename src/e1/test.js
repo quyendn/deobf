@@ -142,6 +142,50 @@ function extractKey(deobfuscated, encryptedBase64Content) {
 
   const matchFXX = snippet.match(/F\s*=\s*['"]([^'"]+)['"]/);
 
+  const vMatchT = deobfuscated.match(/V\s*=\s*\[\s*([\s\S]*?)\s*\]\s*;/);
+  // 2. Tìm block V = [ ... ]; mà phần tử đầu là "53"
+  const vBlockRegex = /V\s*=\s*\[\s*"53"[\s\S]*?\];/;
+  const vBlockMatch = deobfuscated.match(vBlockRegex);
+  if (vBlockMatch) {
+    try {
+      const vBlock = vBlockMatch[0];
+      console.log("--- V block ---\n", vBlock, "\n---------------\n");
+
+      // 3. Lấy nội dung giữa dấu [ và ] (bỏ V = [ và ];)
+      const rawArray = vBlock
+        .replace(/^V\s*=\s*\[/, "")
+        .replace(/\];$/, "")
+        .trim();
+
+      // 4. Dùng matchAll để trích mọi chuỗi hex như "53", "30", ...
+      const hexStrings = Array.from(
+        rawArray.matchAll(/"([0-9A-Fa-f]+)"/g),
+        (m) => m[1]
+      );
+      console.log("Parsed hex count =", hexStrings.length);
+      console.log("First few hexes:", hexStrings.slice(0, 8));
+
+      if (hexStrings.length === 0) {
+        console.error("❌ Không tìm thấy phần tử hex nào trong V.");
+      }
+      // 5. Chuyển mỗi hex thành ký tự, rồi nối thành key
+      const aesKeyM = hexStrings
+        .map((h) => String.fromCharCode(parseInt(h, 16)))
+        .join("");
+
+      console.log("\n✅ AES key =", aesKeyM);
+      if (aesKeyM.length > 0) {
+        let result = tryDecryptJson(encryptedBase64Content, aesKeyM);
+        if (result) {
+          console.log(
+            "[*] (oMatchXY) Key found when checking for reverse arrays."
+          );
+          return [result, aesKeyM];
+        } else console.error("Not Decrypt with key");
+      }
+    } catch (error) {}
+  }
+
   // 2. Regex tìm biến O = "--....";
   const oMatchXY = deobfuscated.match(/O\s*=\s*['"]([^'"]+)['"]/);
   if (oMatchXY) {
