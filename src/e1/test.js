@@ -140,6 +140,26 @@ function extractKey(deobfuscated, encryptedBase64Content) {
   const fnRegex =
     /(Y|J|E|u|I|G|k)\s*=\s*\(\)\s*=>\s*{[\s\S]*?return\s*['"]([^'"]+)['"]/g;
 
+  const matchFXX = snippet.match(/F\s*=\s*['"]([^'"]+)['"]/);
+  try {
+    if (matchFXX) {
+      // 2. Lấy giá trị F
+      const F = matchFXX[1];
+
+      // 3. Đảo ngược chuỗi để được key
+      const aesKey = F.split("").reverse().join("");
+      if (aesKey.length > 0) {
+        let result = tryDecryptJson(encryptedBase64Content, aesKey);
+        if (result) {
+          console.log(
+            "[*] (oMatch) Key found when checking for reverse arrays."
+          );
+          return [result, aesKey];
+        } else console.error("Not Decrypt with key");
+      }
+    }
+  } catch {}
+
   try {
     const oMatchF = snippet.match(fnRegex);
     if (oMatchF) {
