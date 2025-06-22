@@ -145,6 +145,25 @@ function extractKey(deobfuscated, encryptedBase64Content) {
   const vMatchT = deobfuscated.match(/V\s*=\s*\[\s*([\s\S]*?)\s*\]\s*;/);
   // 2. Tìm block V = [ ... ]; mà phần tử đầu là "53"
   const vBlockRegex = /V\s*=\s*\[\s*"53"[\s\S]*?\];/;
+
+  const vMatchTT = deobfuscated.match(/V\s*=\s*['"]([^'"]+)['"]/);
+  if (vMatchTT) {
+    // 3. Lấy chuỗi V và remove ký tự đầu
+    const V = vMatchTT[1]; // e.g. "-gcPoP5rF0hQzRthkXvqfOu4IcbxnmBcx0VquecTRy5n3Eu9FX"
+    const aesKeyMM = V.slice(1);
+    if (aesKeyMM.length > 0) {
+      try {
+        let result = tryDecryptJson(encryptedBase64Content, aesKeyMM);
+        if (result) {
+          console.log(
+            "[*] (vMatchTT) Key found when checking for reverse arrays."
+          );
+          return [result, aesKeyMM];
+        } else console.error("Not Decrypt with key");
+      } catch (error) {}
+    }
+  }
+
   const vBlockMatch = deobfuscated.match(vBlockRegex);
   if (vBlockMatch) {
     try {
