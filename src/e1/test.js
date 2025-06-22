@@ -147,6 +147,41 @@ function extractKey(deobfuscated, encryptedBase64Content) {
   const vBlockRegex = /V\s*=\s*\[\s*"53"[\s\S]*?\];/;
 
   const vMatchTT = deobfuscated.match(/V\s*=\s*['"]([^'"]+)['"]/);
+
+  try {
+    // 1. Lấy đoạn chứa Z.U2V.M1tu_6N() và mảng T/v
+    const start = deobfuscated.indexOf("Z.U2V.M1tu_6N()");
+    const snippet = deobfuscated.substring(start, start + 5000);
+
+    // 2. Trích v
+    const vMatchT = snippet.match(/v\s*=\s*(\d+)\s*;/);
+    if (vMatchT) {
+      const v = parseInt(vMatchT[1], 10);
+
+      // 3. Trích mảng T
+      const tMatchMM = snippet.match(/T\s*=\s*\[([\d,\s]+)\]\s*;/);
+      if (tMatchMM) {
+        const T = tMatchMM[1].split(",").map((s) => parseInt(s.trim(), 10));
+
+        // 4. XOR từng byte với v và build key
+        const aesKeyMY = T.map((byte) => String.fromCharCode(byte ^ v)).join(
+          ""
+        );
+        // 5. In kết quả
+        console.log("AES key =", aesKeyMY);
+        if (aesKeyMY.length > 0) {
+          let result = tryDecryptJson(encryptedBase64Content, aesKeyMY);
+          if (result) {
+            console.log(
+              "[*] (vMatchTT) Key found when checking for reverse arrays."
+            );
+            return [result, aesKeyMY];
+          } else console.error("Not Decrypt with key");
+        }
+      }
+    }
+  } catch (error) {}
+
   if (vMatchTT) {
     // 3. Lấy chuỗi V và remove ký tự đầu
     const V = vMatchTT[1]; // e.g. "-gcPoP5rF0hQzRthkXvqfOu4IcbxnmBcx0VquecTRy5n3Eu9FX"
