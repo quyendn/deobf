@@ -148,6 +148,35 @@ function extractKey(deobfuscated, encryptedBase64Content) {
 
   const vMatchTT = deobfuscated.match(/V\s*=\s*['"]([^'"]+)['"]/);
 
+
+  const zMatchz = deobfuscated.match(/z\s*=\s*["']([^"']+)["']/);
+  if (zMatchz) {
+     const base64Key  = zMatchz[1];
+    console.log('Found Base64 key:', base64Key);
+    // 3. Decode Base64 thành AES key
+    const aesKey = Buffer.from(base64Key, 'base64').toString('utf8');
+    // 4. In ra
+    console.log('AES key =', aesKey);
+    if(aesKey.length > 0)
+    {
+      try {
+         let result = tryDecryptJson(encryptedBase64Content, aesKey);
+          if (result) {
+            console.log(
+              "[*] (vMatchTT) Key found when checking for reverse arrays."
+            );
+            return [result, aesKey];
+          } else console.error("Not Decrypt with key");
+      } catch (error) {
+        
+      }
+    }
+    
+  }
+ 
+
+
+
   try {
     // 1. Lấy đoạn chứa Z.U2V.M1tu_6N() và mảng T/v
     const start = deobfuscated.indexOf("Z.U2V.M1tu_6N()");
