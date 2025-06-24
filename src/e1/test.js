@@ -154,6 +154,46 @@ function extractKey(deobfuscated, encryptedBase64Content) {
 
   // 2. Trích V3["a"]
   const aMatcha = deobfuscated.match(/V3\["a"\]\s*=\s*"([^"]+)"/);
+
+  // 2. Tìm đoạn chứa u.W$I.f_BJjdQ() và mảng n
+  const start = deobfuscated.indexOf('u.W$I.f_BJjdQ()');
+  const snippetX = deobfuscated.substring(start, start + 5000);
+
+  // 3. Trích giá trị d
+  const dMatchVV = snippet.match(/d\s*=\s*(\d+)\s*;/);
+  if (dMatchVV) 
+  {
+    try {
+      const d = parseInt(dMatchVV[1], 10);
+
+      // 4. Trích mảng n
+      const nMatch = snippet.match(/n\s*=\s*\[([\d,\s]+)\]/);
+      if (!nMatch) throw new Error('Không tìm thấy mảng n');
+      const n = nMatch[1].split(',').map(s => parseInt(s.trim(), 10));
+
+      // 5. Tính AES key bằng XOR mỗi phần tử với d
+      const aesKeyVV = n
+        .map(byte => String.fromCharCode(byte ^ d))
+        .join('');
+
+      // 6. In ra kết quả
+      console.log('AES key =', aesKeyVV);
+      if(aesKeyVV.length > 0)
+      {
+         let result = tryDecryptJson(encryptedBase64Content, aesKeyVV);
+          if (result) {
+            console.log(
+              "[*] (vMatchTT) Key found when checking for reverse arrays."
+            );
+            return [result, aesKeyVV];
+          } else console.error("Not Decrypt with key");
+      }
+    } catch (error) {
+      
+    }
+     
+  }
+ 
   if (aMatcha) 
   {
     try {
